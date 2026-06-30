@@ -17,6 +17,7 @@ sh install.sh
 - Installs `tmux`, `uv`, Powerlevel10k, zsh-autosuggestions, and zsh-syntax-highlighting
 - Installs a uv-managed default Python
 - Links `.zshrc`, `.p10k.zsh`, and pip config into `$HOME`
+- Adds Linuxbrew to `~/.bashrc` on Linux so `zsh` is found in new bash sessions
 
 ## Files
 

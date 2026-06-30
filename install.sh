@@ -31,6 +31,20 @@ link() {
   ln -s "$1" "$2"
 }
 
+ensure_line() {
+  file="$1"
+  line="$2"
+
+  touch "$file"
+  if ! grep -Fqx "$line" "$file"; then
+    if [ -s "$file" ]; then
+      printf '\n%s\n' "$line" >> "$file"
+    else
+      printf '%s\n' "$line" >> "$file"
+    fi
+  fi
+}
+
 case "$OS" in
   Darwin|Linux) ;;
   *) die "unsupported OS: $OS" ;;
@@ -59,8 +73,16 @@ link "$ROOT/.zshrc" "$HOME/.zshrc"
 link "$ROOT/.p10k.zsh" "$HOME/.p10k.zsh"
 link "$ROOT/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
 
+if [ "$OS" = "Linux" ]; then
+  ensure_line "$HOME/.bashrc" 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"'
+fi
+
 if [ "$OS" = "Darwin" ]; then
   link "$ROOT/.config/pip/pip.conf" "$HOME/Library/Application Support/pip/pip.conf"
 fi
 
-printf '\nDone. Restart your terminal or run: exec zsh\n'
+if [ "$OS" = "Linux" ]; then
+  printf '\nDone. Restart your terminal or run: source ~/.bashrc && exec zsh\n'
+else
+  printf '\nDone. Restart your terminal or run: exec zsh\n'
+fi
