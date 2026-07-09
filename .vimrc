@@ -22,7 +22,7 @@ if !empty(glob(s:vim_plug_path))
 
     " List your plugins here
     Plug 'lervag/vimtex', { 'tag': 'v2.15' }
-    Plug 'ojroques/vim-oscyank'
+    Plug 'ojroques/vim-oscyank', { 'branch': 'main' }
 
     call plug#end()
 
@@ -108,7 +108,9 @@ endif
 " unnamedplus = "+ register linked to OS clipboard
 " Only set when Vim was built with clipboard support
 
-vnoremap <silent> <leader>y :OSCYank<CR>
+nmap <leader>y <Plug>OSCYankOperator
+nmap <leader>yy <leader>y_
+vmap <leader>y <Plug>OSCYankVisual
 
 " ------------------------------
 " Disable Arrow Keys
