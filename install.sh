@@ -71,6 +71,7 @@ uv python install --default
 step "Dotfiles"
 link "$ROOT/.zshrc" "$HOME/.zshrc"
 link "$ROOT/.p10k.zsh" "$HOME/.p10k.zsh"
+link "$ROOT/.vimrc" "$HOME/.vimrc"
 link "$ROOT/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
 
 if [ "$OS" = "Linux" ]; then

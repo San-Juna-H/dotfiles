@@ -16,7 +16,8 @@ sh install.sh
 - Installs `zsh` on Linux
 - Installs `tmux`, `uv`, Powerlevel10k, zsh-autosuggestions, and zsh-syntax-highlighting
 - Installs a uv-managed default Python
-- Links `.zshrc`, `.p10k.zsh`, and pip config into `$HOME`
+- Links `.zshrc`, `.p10k.zsh`, `.vimrc`, and pip config into `$HOME`
+- Bootstraps `vim-plug` and installs configured Vim plugins on first Vim launch
 - Adds Linuxbrew to `~/.bashrc` on Linux so `zsh` is found in new bash sessions
 
 ## Files

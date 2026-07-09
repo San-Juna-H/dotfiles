@@ -2,13 +2,41 @@
 " Vim Configuration File (.vimrc)
 " ==============================
 
-call plug#begin()
+let mapleader = " "      " Set leader key to Space
 
-" List your plugins here
-Plug 'lervag/vimtex'
-Plug 'lervag/vimtex', { 'tag': 'v2.15' }
+let s:vim_plug_path = expand('~/.vim/autoload/plug.vim')
+let s:install_plugins = empty(glob(s:vim_plug_path))
 
-call plug#end()
+if s:install_plugins
+    if executable('curl')
+        silent execute '!curl -fLo ' . shellescape(s:vim_plug_path) . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+    else
+        echohl WarningMsg
+        echom 'curl is required to install vim-plug automatically'
+        echohl None
+    endif
+endif
+
+if !empty(glob(s:vim_plug_path))
+    call plug#begin()
+
+    " List your plugins here
+    Plug 'lervag/vimtex', { 'tag': 'v2.15' }
+    Plug 'ojroques/vim-oscyank'
+
+    call plug#end()
+
+    for s:plugin in values(g:plugs)
+        if !isdirectory(s:plugin.dir)
+            let s:install_plugins = 1
+            break
+        endif
+    endfor
+
+    if s:install_plugins
+        autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+    endif
+endif
 
 let g:vimtex_view_method = 'skim'
 
@@ -62,7 +90,6 @@ set fileencoding=utf-8   " File saving encoding UTF-8
 " ------------------------------
 " Search
 " ------------------------------
-let mapleader = " "      " Set leader key to Space
 set ignorecase           " Case-insensitive search
 set smartcase            " Case-sensitive if uppercase letters are used
 set incsearch            " Show search matches while typing
@@ -80,6 +107,8 @@ endif
 " unnamed = "* register linked to OS clipboard
 " unnamedplus = "+ register linked to OS clipboard
 " Only set when Vim was built with clipboard support
+
+vnoremap <silent> <leader>y :OSCYank<CR>
 
 " ------------------------------
 " Disable Arrow Keys
