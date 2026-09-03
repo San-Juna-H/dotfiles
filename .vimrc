@@ -4,41 +4,14 @@
 
 let mapleader = " "      " Set leader key to Space
 
-let s:vim_plug_path = expand('~/.vim/autoload/plug.vim')
-let s:install_plugins = empty(glob(s:vim_plug_path))
-
-if s:install_plugins
-    if executable('curl')
-        silent execute '!curl -fLo ' . shellescape(s:vim_plug_path) . ' --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-    else
-        echohl WarningMsg
-        echom 'curl is required to install vim-plug automatically'
-        echohl None
-    endif
-endif
-
-if !empty(glob(s:vim_plug_path))
+if filereadable(expand('~/.vim/autoload/plug.vim'))
     call plug#begin()
 
     " List your plugins here
-    Plug 'lervag/vimtex', { 'tag': 'v2.15' }
     Plug 'ojroques/vim-oscyank', { 'branch': 'main' }
 
     call plug#end()
-
-    for s:plugin in values(g:plugs)
-        if !isdirectory(s:plugin.dir)
-            let s:install_plugins = 1
-            break
-        endif
-    endfor
-
-    if s:install_plugins
-        autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-    endif
 endif
-
-let g:vimtex_view_method = 'skim'
 
 " ------------------------------
 " Syntax Highlighting

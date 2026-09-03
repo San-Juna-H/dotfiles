@@ -4,86 +4,71 @@ set -eu
 ROOT="$(CDPATH= cd "$(dirname "$0")" && pwd)"
 OS="$(uname -s)"
 
-die() {
-  printf 'error: %s\n' "$1" >&2
-  exit 1
-}
-
 step() {
   printf '\n==> %s\n' "$1"
 }
 
-brew_env() {
-  for brew_path in /opt/homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-    [ -x "$brew_path" ] && eval "$("$brew_path" shellenv)" && return 0
+load_brew() {
+  for brew_path in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [ -x "$brew_path" ]; then
+      eval "$("$brew_path" shellenv)"
+      return
+    fi
   done
-
   command -v brew >/dev/null 2>&1
 }
 
-brew_install() {
-  brew list "$1" >/dev/null 2>&1 || brew install "$1"
-}
+link_file() {
+  src="$1"
+  dest="$2"
 
-link() {
-  mkdir -p "$(dirname "$2")"
-  rm -f "$2"
-  ln -s "$1" "$2"
-}
-
-ensure_line() {
-  file="$1"
-  line="$2"
-
-  touch "$file"
-  if ! grep -Fqx "$line" "$file"; then
-    if [ -s "$file" ]; then
-      printf '\n%s\n' "$line" >> "$file"
-    else
-      printf '%s\n' "$line" >> "$file"
-    fi
+  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
+    return
   fi
-}
 
-case "$OS" in
-  Darwin|Linux) ;;
-  *) die "unsupported OS: $OS" ;;
-esac
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    backup="${dest}.backup.$(date +%Y%m%d-%H%M%S)"
+    mv "$dest" "$backup"
+    printf 'backed up: %s\n' "$backup"
+  fi
+
+  mkdir -p "$(dirname "$dest")"
+  ln -s "$src" "$dest"
+  printf 'linked: %s -> %s\n' "$dest" "$src"
+}
 
 step "Homebrew"
-if ! brew_env; then
-  command -v curl >/dev/null 2>&1 || die "curl is required"
+if ! load_brew; then
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  brew_env || die "brew is not available after install"
+  load_brew
 fi
 
 step "Packages"
-[ "$OS" = "Linux" ] && brew_install zsh
-brew_install tmux
-brew_install uv
-brew_install powerlevel10k
-brew_install zsh-autosuggestions
-brew_install zsh-syntax-highlighting
-
-step "Python"
+brew bundle install --file="$ROOT/Brewfile" --no-upgrade
 uv python install --default
 
 step "Dotfiles"
-link "$ROOT/.zshrc" "$HOME/.zshrc"
-link "$ROOT/.p10k.zsh" "$HOME/.p10k.zsh"
-link "$ROOT/.vimrc" "$HOME/.vimrc"
-link "$ROOT/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
+link_file "$ROOT/.zshrc" "$HOME/.zshrc"
+link_file "$ROOT/.p10k.zsh" "$HOME/.p10k.zsh"
+link_file "$ROOT/.vimrc" "$HOME/.vimrc"
 
 if [ "$OS" = "Linux" ]; then
-  ensure_line "$HOME/.bashrc" 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"'
+  link_file "$ROOT/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
+  line='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"'
+  touch "$HOME/.bashrc"
+  grep -Fqx "$line" "$HOME/.bashrc" || printf '\n%s\n' "$line" >> "$HOME/.bashrc"
 fi
 
 if [ "$OS" = "Darwin" ]; then
-  link "$ROOT/.config/pip/pip.conf" "$HOME/Library/Application Support/pip/pip.conf"
+  link_file "$ROOT/.config/pip/pip.conf" "$HOME/Library/Application Support/pip/pip.conf"
 fi
 
-if [ "$OS" = "Linux" ]; then
-  printf '\nDone. Restart your terminal or run: source ~/.bashrc && exec zsh\n'
-else
-  printf '\nDone. Restart your terminal or run: exec zsh\n'
+step "Vim plugins"
+plug_path="$HOME/.vim/autoload/plug.vim"
+if [ ! -f "$plug_path" ]; then
+  curl -fLo "$plug_path" --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 fi
+vim -Nu "$ROOT/.vimrc" -n -es '+PlugInstall --sync' '+qall'
+
+printf '\nDone. Restart your terminal.\n'

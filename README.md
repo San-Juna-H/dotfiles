@@ -1,31 +1,22 @@
 # Dotfiles
 
-Personal setup for macOS and Linux.
+Minimal shell, Vim, and Python setup for macOS and Linux.
 
 ## Install
 
 ```sh
-git clone <repo-url> ~/dotfiles
+git clone https://github.com/San-Juna-H/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-sh install.sh
+./install.sh
 ```
 
-## What It Does
+The installer runs without confirmation prompts. It installs Homebrew when
+needed, installs the packages in `Brewfile`, links the configuration files, and
+installs Vim plugins. Existing link targets are moved to timestamped backup
+files automatically.
 
-- Installs Homebrew if missing
-- Installs `zsh` on Linux
-- Installs `tmux`, `uv`, Powerlevel10k, zsh-autosuggestions, and zsh-syntax-highlighting
-- Installs a uv-managed default Python
-- Links `.zshrc`, `.p10k.zsh`, `.vimrc`, and pip config into `$HOME`
-- Bootstraps `vim-plug` and installs configured Vim plugins on first Vim launch
-- Adds Linuxbrew to `~/.bashrc` on Linux so `zsh` is found in new bash sessions
+The pip configuration rejects `pip install` outside a virtual environment. Use
+a virtual environment or `uv`.
 
-## Files
-
-- `install.sh`
-- `.zshrc`
-- `.p10k.zsh`
-- `.config/pip/pip.conf`
-- `.vimrc`
-
-Do not commit secrets, local credentials, or Git identity settings.
+Git identity remains in the ignored `.gitconfig`. Do not commit secrets or
+local credentials.

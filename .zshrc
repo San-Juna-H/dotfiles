@@ -3,7 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-for brew_cmd in /opt/homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+for brew_cmd in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
   if [[ -x "$brew_cmd" ]]; then
     eval "$("$brew_cmd" shellenv)"
     break
