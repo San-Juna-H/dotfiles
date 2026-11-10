@@ -1,74 +1,37 @@
 #!/usr/bin/env sh
 set -eu
-
 ROOT="$(CDPATH= cd "$(dirname "$0")" && pwd)"
-OS="$(uname -s)"
+case "$(uname -s)" in
+  Linux) platform=linux ;;
+  Darwin) platform=macos ;;
+  *) echo 'Only Linux and macOS are supported.' >&2; exit 1 ;;
+esac
 
-step() {
-  printf '\n==> %s\n' "$1"
-}
-
-load_brew() {
-  for brew_path in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-    if [ -x "$brew_path" ]; then
-      eval "$("$brew_path" shellenv)"
-      return
-    fi
-  done
-  command -v brew >/dev/null 2>&1
-}
-
-link_file() {
-  src="$1"
-  dest="$2"
-
-  if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$src" ]; then
-    return
+for brew_path in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  if [ -x "$brew_path" ]; then
+    eval "$("$brew_path" shellenv)"
+    break
   fi
-
-  if [ -e "$dest" ] || [ -L "$dest" ]; then
-    backup="${dest}.backup.$(date +%Y%m%d-%H%M%S)"
-    mv "$dest" "$backup"
-    printf 'backed up: %s\n' "$backup"
-  fi
-
-  mkdir -p "$(dirname "$dest")"
-  ln -s "$src" "$dest"
-  printf 'linked: %s -> %s\n' "$dest" "$src"
-}
-
-step "Homebrew"
-if ! load_brew; then
-  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  load_brew
+done
+if ! command -v brew >/dev/null 2>&1; then
+  echo 'Install Homebrew first.' >&2
+  exit 1
+fi
+if ! HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$ROOT/Brewfile"; then
+  printf 'As the Homebrew owner, run: brew bundle install --file="%s/Brewfile" --no-upgrade\n' "$ROOT" >&2
+  exit 1
 fi
 
-step "Packages"
-brew bundle install --file="$ROOT/Brewfile" --no-upgrade
-uv python install --default
+for name in .zshrc .p10k.zsh .vimrc; do
+  rm -rf -- "$HOME/$name"
+  ln -s "$ROOT/$name" "$HOME/$name"
+done
 
-step "Dotfiles"
-link_file "$ROOT/.zshrc" "$HOME/.zshrc"
-link_file "$ROOT/.p10k.zsh" "$HOME/.p10k.zsh"
-link_file "$ROOT/.vimrc" "$HOME/.vimrc"
-
-if [ "$OS" = "Linux" ]; then
-  link_file "$ROOT/.config/pip/pip.conf" "$HOME/.config/pip/pip.conf"
-  line='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"'
-  touch "$HOME/.bashrc"
-  grep -Fqx "$line" "$HOME/.bashrc" || printf '\n%s\n' "$line" >> "$HOME/.bashrc"
-fi
-
-if [ "$OS" = "Darwin" ]; then
-  link_file "$ROOT/.config/pip/pip.conf" "$HOME/Library/Application Support/pip/pip.conf"
-fi
-
-step "Vim plugins"
 plug_path="$HOME/.vim/autoload/plug.vim"
-if [ ! -f "$plug_path" ]; then
-  curl -fLo "$plug_path" --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-fi
+mkdir -p "$(dirname "$plug_path")"
+curl -fsSL https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -o "$plug_path.tmp"
+mv "$plug_path.tmp" "$plug_path"
 vim -Nu "$ROOT/.vimrc" -n -es '+PlugInstall --sync' '+qall'
 
-printf '\nDone. Restart your terminal.\n'
+. "$ROOT/install-$platform.sh"
+printf '\nDone. Log out and log back in.\n'
