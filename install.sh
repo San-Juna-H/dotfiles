@@ -17,7 +17,16 @@ if ! command -v brew >/dev/null 2>&1; then
   echo 'Install Homebrew first.' >&2
   exit 1
 fi
-if ! HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --file="$ROOT/Brewfile"; then
+required="$(HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --brews --file="$ROOT/Brewfile")"
+installed="$(HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula -1)"
+missing=0
+for package in $required; do
+  if ! printf '%s\n' "$installed" | grep -Fxq "$package"; then
+    printf 'Missing package: %s\n' "$package" >&2
+    missing=1
+  fi
+done
+if [ "$missing" = 1 ]; then
   printf 'As the Homebrew owner, run: brew bundle install --file="%s/Brewfile" --no-upgrade\n' "$ROOT" >&2
   exit 1
 fi
