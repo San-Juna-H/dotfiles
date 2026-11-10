@@ -17,7 +17,7 @@ if ! command -v brew >/dev/null 2>&1; then
   echo 'Install Homebrew first.' >&2
   exit 1
 fi
-if ! HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$ROOT/Brewfile"; then
+if ! HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --file="$ROOT/Brewfile"; then
   printf 'As the Homebrew owner, run: brew bundle install --file="%s/Brewfile" --no-upgrade\n' "$ROOT" >&2
   exit 1
 fi
