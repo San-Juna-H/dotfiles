@@ -17,8 +17,10 @@ if ! command -v brew >/dev/null 2>&1; then
   echo 'Install Homebrew first.' >&2
   exit 1
 fi
-required="$(HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --brews --file="$ROOT/Brewfile")"
-installed="$(HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula -1)"
+required="$(awk -F '"' -v platform="$platform" '
+  /^brew / && !(/OS.linux/ && platform != "linux") { print $2 }
+' "$ROOT/Brewfile")"
+installed="$(ls -1 "$(brew --cellar)")"
 missing=0
 for package in $required; do
   if ! printf '%s\n' "$installed" | grep -Fxq "$package"; then
